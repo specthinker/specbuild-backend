@@ -63,10 +63,9 @@ Two ways, pick one.
    - **Plan**: `Free`
    - **Health check path**: `/actuator/health`
 4. Add the env vars from the table below.
-5. Click **Advanced** → **Add Disk**:
-   - Name: `specbuild-data`
-   - Mount path: `/var/data`
-   - Size: `1 GB`
+5. **Skip the disk.** Persistent disks are not supported on the free tier
+   (Render rejects them with "disks are not supported for free tier
+   services"). See **§ Gotchas** below for the SQLite trade-off.
 6. Click **Create Web Service**.
 
 ## 3. Env vars the service needs
@@ -75,7 +74,6 @@ Two ways, pick one.
 | --- | --- | --- |
 | `JAVA_VERSION` | `17` | no |
 | `ALLOWED_ORIGIN` | `https://specthinker.github.io` | no |
-| `SPRING_DATASOURCE_URL` | `jdbc:sqlite:/var/data/specbuild.db` | no |
 | `DEEPSEEK_API_KEY` | *your key* | **yes** |
 | `OPENROUTER_API_KEY` | *your key* | **yes** |
 | `SESSION_SECRET` | *Render auto-generates* | yes |
@@ -87,9 +85,11 @@ Spring via `-Dserver.port=${PORT}`.
 `ALLOWED_ORIGIN` is the only allowed CORS origin. For local dev you can
 override it to `*` or to `http://localhost:5173` in a Render env var.
 
-`SPRING_DATASOURCE_URL` points at the persistent disk so the SQLite file
-survives redeploys. The disk is mounted at `/var/data` and the schema
-auto-creates `specbuild.db` on first boot.
+`SPRING_DATASOURCE_URL` is **not** set. The app uses the default
+`jdbc:sqlite:./data/specthinker.db`, which lives inside the container
+and is **wiped on every redeploy**. This is fine for the free tier
+because the main flow is ad-hoc render + AI polish (no save required).
+See **§ Gotchas** below.
 
 ## 4. First deploy
 
@@ -188,7 +188,19 @@ the API base.
   accepts comma-separated values; you only need to align the env var
   name.)
 
-- **No persistent disk = no saved specs across redeploys.** The disk
-  config in `render.yaml` is the fix. Removing the `disk:` block puts
-  the SQLite file in `/tmp` (or wherever the container scratch dir
-  points), which is ephemeral.
+- **No persistent disk on the free tier.** Render rejects disks for
+  free services. The SQLite file at `./data/specthinker.db` lives
+  inside the container and is **wiped on every redeploy**. This is
+  fine if your main flow is "fill the form → render → copy → optionally
+  save" because the render and polish endpoints don't touch the DB.
+  Saved specs (`POST /api/v1/specs`) are bonus and will disappear on
+  the next deploy. To get persistence:
+  - **Easiest**: switch to the **Starter** plan ($7/mo) and add a
+    1 GB disk (~$1/mo) mounted at `/var/data`. Set
+    `SPRING_DATASOURCE_URL=jdbc:sqlite:/var/data/specbuild.db` and
+    add the `disk:` block back to `render.yaml`. The repo's
+    `render.yaml` is currently set up for free + ephemeral.
+  - **Cheaper but DIY**: swap SQLite for Postgres. Render's free
+    tier includes a Postgres instance (90-day expiry on free, then
+    you either pay or re-create). That changes the code, not just
+    the deploy config.
