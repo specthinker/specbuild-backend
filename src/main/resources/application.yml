@@ -1,0 +1,56 @@
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: specbuild-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:sqlite:./data/specthinker.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
+      connection-test-query: SELECT 1
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      continue-on-error: false
+  jackson:
+    default-property-inclusion: non_null
+
+specthinker:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGIN:*}
+  llm:
+    connect-timeout: 10
+    request-timeout: 45
+    quota:
+      enabled: true
+      per-client-per-day: 50
+      default-client-id: anonymous
+    providers:
+      deepseek:
+        enabled: true
+        api-key: ${DEEPSEEK_API_KEY:}
+        base-url: https://api.deepseek.com/v1
+        model: deepseek-chat
+      openrouter-deepseek:
+        enabled: true
+        api-key: ${OPENROUTER_API_KEY:}
+        base-url: https://openrouter.ai/api/v1
+        model: deepseek/deepseek-chat-v3.1:free
+      openrouter-free:
+        enabled: true
+        api-key: ${OPENROUTER_API_KEY:}
+        base-url: https://openrouter.ai/api/v1
+        model: meta-llama/llama-3.1-8b-instruct:free
+
+logging:
+  level:
+    root: INFO
+    com.specthinker: INFO
+    org.springframework.jdbc.core: WARN
+    org.springframework.data.jdbc: WARN

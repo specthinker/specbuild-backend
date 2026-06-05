@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: specbuild-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /actuator/health
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"
+      - key: ALLOWED_ORIGIN
+        value: https://specthinker.github.io
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:sqlite:/var/data/specbuild.db
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+    disk:
+      name: specbuild-data
+      mountPath: /var/data
+      sizeGB: 1
