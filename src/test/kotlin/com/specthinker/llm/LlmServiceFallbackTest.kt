@@ -1,5 +1,6 @@
 package com.specthinker.llm
 
+import com.specthinker.auth.UserRepository
 import com.specthinker.spec.Sections
 import com.specthinker.testutil.FixedClock
 import kotlinx.coroutines.test.runTest
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import java.time.Instant
 
 private class StubProvider(override val name: String, private val result: Result<String>) : LlmProvider {
@@ -22,12 +24,14 @@ private class StubProvider(override val name: String, private val result: Result
 
 class LlmServiceFallbackTest {
 
+    private fun emptyUserRepo(): UserRepository = mock(UserRepository::class.java)
+
     @Test
     fun `first provider success returns immediately`() = runTest {
         val p1 = StubProvider("p1", Result.success("ok"))
         val p2 = StubProvider("p2", Result.success("never"))
         val props = baseProps()
-        val quota = QuotaService(props, FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
+        val quota = QuotaService(props, emptyUserRepo(), FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
         val svc = LlmService(listOf(p1, p2), quota, props)
 
         val outcome = svc.polish("t", Sections(goal = "g"), clientId = "alice")
@@ -44,7 +48,7 @@ class LlmServiceFallbackTest {
         val p1 = StubProvider("p1", Result.failure(LlmHttpException("p1", 500, "boom")))
         val p2 = StubProvider("p2", Result.success("ok"))
         val props = baseProps()
-        val quota = QuotaService(props, FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
+        val quota = QuotaService(props, emptyUserRepo(), FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
         val svc = LlmService(listOf(p1, p2), quota, props)
 
         val outcome = svc.polish("t", Sections(goal = "g"), clientId = "alice")
@@ -84,7 +88,7 @@ class LlmServiceFallbackTest {
         val p1 = StubProvider("p1", Result.failure(LlmHttpException("p1", 500, "x")))
         val p2 = StubProvider("p2", Result.failure(LlmHttpException("p2", 502, "x")))
         val props = baseProps()
-        val quota = QuotaService(props, FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
+        val quota = QuotaService(props, emptyUserRepo(), FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
         val svc = LlmService(listOf(p1, p2), quota, props)
 
         val ex = assertThrows(AllProvidersFailedException::class.java) {
@@ -101,7 +105,7 @@ class LlmServiceFallbackTest {
         val now = Instant.parse("2026-01-15T12:00:00Z")
         val p1 = StubProvider("p1", Result.success("ok"))
         val props = baseProps(quotaLimit = 1)
-        val quota = QuotaService(props, FixedClock(now))
+        val quota = QuotaService(props, emptyUserRepo(), FixedClock(now))
         val svc = LlmService(listOf(p1), quota, props)
 
         kotlinx.coroutines.runBlocking { svc.polish("t", Sections(), clientId = "dave") }
@@ -125,5 +129,5 @@ class LlmServiceFallbackTest {
         ),
     )
 
-    private fun baseQuota(): QuotaService = QuotaService(baseProps(), FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
+    private fun baseQuota(): QuotaService = QuotaService(baseProps(), emptyUserRepo(), FixedClock(Instant.parse("2026-01-15T12:00:00Z")))
 }

@@ -18,3 +18,25 @@ services:
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
+      - key: BACKEND_URL
+        value: https://specbuild-backend.onrender.com
+      - key: ALLOWED_REDIRECT_ORIGINS
+        value: https://specthinker.github.io
+      - key: COOKIE_SAMESITE
+        value: None
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: MAIL_MODE
+        value: logging
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: onboarding@resend.dev
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_TO_PLAN
+        value: ""

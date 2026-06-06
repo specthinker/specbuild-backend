@@ -24,6 +24,7 @@ spring:
 specthinker:
   cors:
     allowed-origins: ${ALLOWED_ORIGIN:*}
+  backend-url: ${BACKEND_URL:http://localhost:8080}
   llm:
     connect-timeout: 10
     request-timeout: 45
@@ -47,6 +48,24 @@ specthinker:
         api-key: ${OPENROUTER_API_KEY:}
         base-url: https://openrouter.ai/api/v1
         model: meta-llama/llama-3.1-8b-instruct:free
+  auth:
+    session-secret: ${SESSION_SECRET:}
+    session-ttl-days: 365
+    allowed-redirect-origins: ${ALLOWED_REDIRECT_ORIGINS:http://localhost:5173,https://specthinker.github.io}
+    cookie:
+      samesite: ${COOKIE_SAMESITE:Lax}
+      secure: ${COOKIE_SECURE:false}
+      domain: ${COOKIE_DOMAIN:}
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+    mail:
+      resend-api-key: ${RESEND_API_KEY:}
+      from: ${MAIL_FROM:onboarding@resend.dev}
+      mode: ${MAIL_MODE:logging}
+  stripe:
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    price-to-plan: ${STRIPE_PRICE_TO_PLAN:}
 
 logging:
   level:

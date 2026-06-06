@@ -43,6 +43,8 @@ dependencies {
 
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
+    implementation("com.stripe:stripe-java:32.2.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }

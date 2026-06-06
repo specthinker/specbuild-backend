@@ -1,5 +1,6 @@
 package com.specthinker.llm
 
+import com.specthinker.auth.CurrentUser
 import com.specthinker.spec.Sections
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -28,9 +29,23 @@ class LlmService(
         require(providers.isNotEmpty()) { "At least one LlmProvider bean is required" }
     }
 
-    suspend fun polish(title: String, sections: Sections, clientId: String?): PolishOutcome {
-        val resolvedClient = (clientId?.takeIf { it.isNotBlank() } ?: props.quota.defaultClientId)
-        val quotaState = quota.consume(resolvedClient)
+    suspend fun polish(
+        title: String,
+        sections: Sections,
+        clientId: String?,
+        currentUser: CurrentUser? = null,
+    ): PolishOutcome {
+        val quotaState: QuotaState
+        val quotaKey: () -> Unit
+        if (currentUser != null) {
+            quotaState = quota.consumeForUser(currentUser.userId, currentUser.plan)
+            quotaKey = { quota.refundForUser(currentUser.userId, currentUser.plan) }
+        } else {
+            val resolvedClient = (clientId?.takeIf { it.isNotBlank() } ?: props.quota.defaultClientId)
+            quotaState = quota.consume(resolvedClient)
+            quotaKey = { quota.refund(resolvedClient) }
+        }
+
         val userPrompt = renderSectionsForPrompt(title, sections)
 
         val errors = mutableListOf<Pair<String, Throwable>>()
@@ -47,7 +62,7 @@ class LlmService(
                 errors += provider.name to e
             }
         }
-        quota.refund(resolvedClient)
+        quotaKey()
         val last = errors.lastOrNull()?.second
         throw AllProvidersFailedException(last).apply {
             errors.forEach { (name, err) -> addSuppressed(RelatedProviderError("$name: ${err.message ?: ""}")) }
