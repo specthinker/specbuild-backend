@@ -32,7 +32,7 @@ class UserService(
             stripeCustomerId = null,
             createdAt = now,
         )
-        return users.save(newUser)
+        return saveAndMarkPersisted(newUser)
     }
 
     @Transactional
@@ -58,7 +58,7 @@ class UserService(
                 createdAt = now,
             ),
         )
-        return users.save(user)
+        return if (byEmail != null) users.save(user) else saveAndMarkPersisted(user)
     }
 
     @Transactional
@@ -122,6 +122,12 @@ class UserService(
         random.nextBytes(bytes)
         val hex = bytes.joinToString("") { "%02x".format(it) }
         return "usr_$hex"
+    }
+
+    private fun saveAndMarkPersisted(user: User): User {
+        val saved = users.save(user)
+        saved.markPersisted()
+        return saved
     }
 
     private fun normalizeEmail(email: String): String = email.trim().lowercase()

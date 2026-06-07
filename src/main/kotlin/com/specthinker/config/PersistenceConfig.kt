@@ -1,5 +1,6 @@
 package com.specthinker.config
 
+import com.specthinker.auth.User
 import com.specthinker.spec.Sections
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -9,6 +10,7 @@ import org.springframework.data.convert.WritingConverter
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions
 import org.springframework.data.jdbc.core.dialect.JdbcDialect
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect
+import org.springframework.data.jdbc.core.mapping.event.AfterLoadCallback
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
 import java.time.Instant
@@ -29,6 +31,11 @@ class PersistenceConfig : AbstractJdbcConfiguration() {
                 LenientStringToInstantConverter(),
             ),
         )
+
+    @Bean
+    fun userAfterLoadCallback(): AfterLoadCallback<User> = AfterLoadCallback { entity ->
+        entity.markPersisted()
+    }
 }
 
 @WritingConverter

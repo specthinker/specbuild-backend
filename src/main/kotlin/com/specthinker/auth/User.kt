@@ -3,6 +3,7 @@ package com.specthinker.auth
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import org.springframework.data.domain.Persistable
 import java.time.Instant
 
 enum class Plan(val wire: String) {
@@ -34,4 +35,46 @@ data class User(
     val stripeCustomerId: String? = null,
     @Column("created_at")
     val createdAt: Instant,
-)
+) : Persistable<String> {
+
+    @org.springframework.data.annotation.Transient
+    private var isNewEntity: Boolean = true
+
+    override fun getId(): String = id
+
+    override fun isNew(): Boolean = isNewEntity
+
+    public fun markPersisted() {
+        isNewEntity = false
+    }
+
+    override fun copy(
+        id: String = this.id,
+        email: String? = this.email,
+        plan: String = this.plan,
+        planSetAt: Instant = this.planSetAt,
+        periodStart: Instant = this.periodStart,
+        specsUsed: Long = this.specsUsed,
+        polishUsed: Long = this.polishUsed,
+        stripeCustomerId: String? = this.stripeCustomerId,
+        createdAt: Instant = this.createdAt,
+    ): User {
+        val copied = User(
+            id = id,
+            email = email,
+            plan = plan,
+            planSetAt = planSetAt,
+            periodStart = periodStart,
+            specsUsed = specsUsed,
+            polishUsed = polishUsed,
+            stripeCustomerId = stripeCustomerId,
+            createdAt = createdAt,
+        )
+        copied.isNewEntity = this.isNewEntity
+        return copied
+    }
+
+    companion object {
+        const val TABLE_NAME = "users"
+    }
+}
