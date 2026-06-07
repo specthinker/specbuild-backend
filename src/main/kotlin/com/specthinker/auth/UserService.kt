@@ -58,7 +58,7 @@ class UserService(
                 createdAt = now,
             ),
         )
-        return if (byEmail != null) users.save(user) else saveAndMarkPersisted(user)
+        return saveAndMarkPersisted(user)
     }
 
     @Transactional
@@ -75,7 +75,7 @@ class UserService(
             polishUsed = 0L,
             stripeCustomerId = stripeCustomerId ?: user.stripeCustomerId,
         )
-        return users.save(updated)
+        return saveAndMarkPersisted(updated)
     }
 
     @Transactional
@@ -84,7 +84,7 @@ class UserService(
             IllegalStateException("Cannot set stripe customer: user not found: $userId")
         }
         if (user.stripeCustomerId == customerId) return user
-        return users.save(user.copy(stripeCustomerId = customerId))
+        return saveAndMarkPersisted(user.copy(stripeCustomerId = customerId))
     }
 
     fun findById(id: String): Optional<User> = users.findById(id)
@@ -99,7 +99,7 @@ class UserService(
         if (anonymousClientId.isNullOrBlank() || anonymousPolishUsed <= 0L) return
         val user = users.findById(userId).orElse(null) ?: return
         if (user.polishUsed >= anonymousPolishUsed) return
-        users.save(user.copy(polishUsed = anonymousPolishUsed))
+        saveAndMarkPersisted(user.copy(polishUsed = anonymousPolishUsed))
     }
 
     private fun createFreeUser(email: String?): User {

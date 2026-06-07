@@ -1,9 +1,10 @@
 package com.specthinker.auth
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
+import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import org.springframework.data.domain.Persistable
 import java.time.Instant
 
 enum class Plan(val wire: String) {
@@ -37,44 +38,14 @@ data class User(
     val createdAt: Instant,
 ) : Persistable<String> {
 
-    @org.springframework.data.annotation.Transient
-    private var isNewEntity: Boolean = true
+    @Transient
+    private var _isNew: Boolean = true
 
     override fun getId(): String = id
 
-    override fun isNew(): Boolean = isNewEntity
+    override fun isNew(): Boolean = _isNew
 
-    public fun markPersisted() {
-        isNewEntity = false
-    }
-
-    override fun copy(
-        id: String = this.id,
-        email: String? = this.email,
-        plan: String = this.plan,
-        planSetAt: Instant = this.planSetAt,
-        periodStart: Instant = this.periodStart,
-        specsUsed: Long = this.specsUsed,
-        polishUsed: Long = this.polishUsed,
-        stripeCustomerId: String? = this.stripeCustomerId,
-        createdAt: Instant = this.createdAt,
-    ): User {
-        val copied = User(
-            id = id,
-            email = email,
-            plan = plan,
-            planSetAt = planSetAt,
-            periodStart = periodStart,
-            specsUsed = specsUsed,
-            polishUsed = polishUsed,
-            stripeCustomerId = stripeCustomerId,
-            createdAt = createdAt,
-        )
-        copied.isNewEntity = this.isNewEntity
-        return copied
-    }
-
-    companion object {
-        const val TABLE_NAME = "users"
+    fun markPersisted() {
+        _isNew = false
     }
 }
