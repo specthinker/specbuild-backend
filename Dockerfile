@@ -12,7 +12,7 @@ RUN chmod +x gradlew && ./gradlew --version
 # Build the bootJar
 COPY build.gradle.kts ./
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon -x test
+RUN ./gradlew bootJar --no-daemon -x test --warning-mode all
 
 # ---- Runtime stage -----------------------------------------------------------
 FROM eclipse-temurin:17-jre-jammy
